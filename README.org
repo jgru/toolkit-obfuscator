@@ -1,0 +1,2 @@
+* toolkit-obfuscator
+This is a personal collection of scripts to automatically modify portable software packages used in a live response toolkit.
