@@ -1,2 +1,15 @@
 * toolkit-obfuscator
 This is a personal collection of scripts to automatically modify portable software packages used in a live response toolkit.
+
+** Usage of ~obfuscate-toolkit.sh~
+#+begin_src sh
+# Modify toolkit and record changes inside resulting .csv
+# Append one null byte (0x00) to .exe files in specified dir
+# Rename file with prefix ir and shorten original filename to 6 chars
+
+# Modify sysinternals executables
+./obfuscate-toolkit.sh --no-recursion --append-bytes 1 --rename ir --shorten 6 --dir ./tools/sysinternals > ./sysinternals-changes.csv
+
+# Modify system32 executables
+./obfuscate-toolkit.sh --no-recursion --append-bytes 1 --rename ir --shorten 6 --dir ./system32 > ./system32-changes.csv
+#+end_src
