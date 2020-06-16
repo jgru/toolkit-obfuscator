@@ -105,7 +105,7 @@ process ()
     local prefix="$7"
     local s="$8"
 
-    echo orig. filename,new filename,old SHA-256,new SHA-256
+    echo orig. filename,new filename,old ${hash%sum},new ${hash%sum}
 
 
      # process files in directory itself
