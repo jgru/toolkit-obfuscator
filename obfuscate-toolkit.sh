@@ -33,7 +33,7 @@ help()
     echo
     echo
     echo 'Example usage:'
-    echo './obfuscate-toolkit.sh --rename prefix --append --num 3'
+    echo './obfuscate-toolkit.sh --md5 --rename prefix --append --num 3'
     echo ' --shorten 4 --dir ./toolkitdir'
     echo
     echo
@@ -41,15 +41,15 @@ help()
 
 process_file()
 {
-    f="$1"
-    is_append="$2"
-    is_random="$3"
-    n=$4
-    is_rename="$5"
-    prefix="$6"
-    s="$7"
+    local f="$1"
+    local is_append="$2"
+    local is_random="$3"
+    local n=$4
+    local is_rename="$5"
+    local prefix="$6"
+    local s="$7"
 
-    oh=$(shasum -a 256 $f | awk '{print $1}')
+    oh=$(eval ${hash} $f | awk '{print $1}')
 
     if [ "${is_append}" == "true" ]
     then
@@ -61,13 +61,13 @@ process_file()
 	fi
     fi
 
-    nh=$(shasum -a 256 $f | awk '{print $1}')
+    nh=$(eval ${hash} $f | awk '{print $1}')
 
     if [ "${is_rename}" == "true" ]
     then
 	if [ "${is_shorten}" == "true" ]
 	then
-	    nf=$(dirname $f)/$prefix-$(basename $f | awk -F'.' '{print $1}' | cut -c -"$s").exe
+	    nf=$(dirname $f)/$prefix-$(basename $f | awk -F'.' '{print $1}' | cut -c -"$s" | tr '[:upper:]' '[:lower:]').exe
 	else
 	    nf=$(dirname $f)/$prefix-$(basename $f).exe
 	fi
@@ -96,37 +96,27 @@ process_file()
 ###########################################################################
 process ()
 {
-    dir="$1"
-    is_norecursion="$2"
-    is_append="$3"
-    is_random="$4"
-    n="$5"
-    is_rename="$6"
-    prefix="$7"
-    s="$8"
+    local dir="$1"
+    local rdepth="$2"
+    local is_append="$3"
+    local is_random="$4"
+    local n="$5"
+    local is_rename="$6"
+    local prefix="$7"
+    local s="$8"
 
     echo orig. filename,new filename,old SHA-256,new SHA-256
 
-    if [[ "${is_norecursion}" == "true" ]]
-    then  # process files in directory itself
-	 find $dir -maxdepth 1 -type f -print0 |
-	    while IFS= read -rd '' f;
-	    do
-		if [[ "${f}" == *.exe ]]
-		then
-		    process_file $f $is_append $is_random $n $is_rename $prefix $s
-		fi
-	done
-    else  # Descend in subdirectories recursively
-	    find ${dir} -type f -print0 |
-	    while IFS= read -rd '' f;
-	    do
-		if [[ "${f}" == *.exe ]]
-		then
-		    process_file $f $is_append $is_random $n $is_rename $prefix $s
-		fi
-	done
-    fi
+
+     # process files in directory itself
+    find $dir -maxdepth ${rdepth} -type f -print0 |
+    while IFS= read -rd '' f;
+    do
+	if [[ "${f}" == *.exe ]]
+	then
+	    process_file $f $is_append $is_random $n $is_rename $prefix $s
+	fi
+    done
 }
 
 
@@ -150,23 +140,31 @@ do
 	    n=$2
 	    shift 2
 	    ;;
-	-n | --no-recursion)
-	    is_norecursion=true
+	--md5)
+	    hash="md5sum"
 	    shift
 	    ;;
-	-q | --random)
+	--recursion)
+	    rdepth="$2"
+	    shift 2
+	    ;;
+	--random)
 	    is_random=true
 	    shift
 	    ;;
-	-r | --rename)
+	--rename)
 	    is_rename=true
 	    prefix="$2"
 	    shift 2
 	    ;;
-	-s | --shorten)
+	 --shorten)
 	    is_shorten=true
 	    s="$2"
 	    shift 2
+	    ;;
+	 --shas256)
+	    hash="sha256sum"
+	    shift
 	    ;;
 	-*)
 	  echo "Error: Unknown option: $1" >&2
@@ -178,6 +176,15 @@ do
        esac
 done
 
+# Ensure every parameter is set, fill with default value
+if ! [[ "${rdepth}"  ]]
+then
+    rdepth="1"
+fi
+if ! [[ "${hash}"  ]]
+then
+    hash="md5sum"
+fi
 
 if ! [[ "${is_shorten}" == "true" ]]
 then
@@ -196,7 +203,7 @@ then
 fi
 
 #echo     $dir
-#echo     $is_norecursion
+#echo     $rdepth
 #echo     $is_append
 #echo     $is_random
 #echo     $n
@@ -207,5 +214,5 @@ fi
 # Call processing function
 if [[ "${is_rename}" == "true" || "${is_append}" == "true" ]]
 then
-    process $dir $is_norecursion $is_append $is_random $n $is_rename $prefix $s
+    process $dir $rdepth $is_append $is_random $n $is_rename $prefix $s
 fi
