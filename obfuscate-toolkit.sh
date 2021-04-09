@@ -162,7 +162,7 @@ do
 	    s="$2"
 	    shift 2
 	    ;;
-	 --shas256)
+	 --sha256)
 	    hash="sha256sum"
 	    shift
 	    ;;
